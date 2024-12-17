@@ -1,10 +1,22 @@
 import {makeWASocket, useMultiFileAuthState} from '@whiskeysockets/baileys'
 import fetch from 'node-fetch'
+
 import 'dotenv/config'
+import fs from 'fs'
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID
 const URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`
+
+let COUNTER, COUNTER_FILE = 'counter.json'
+const data = fs.readFileSync(COUNTER_FILE, 'utf-8');
+console.log(data)
+COUNTER = JSON.parse(data).counter;
+
+const counterIncrement = () => {
+    COUNTER++;
+    fs.writeFileSync(COUNTER_FILE, JSON.stringify({ counter: COUNTER }));
+}
 
 const sendToTelegram = async msg => {
     await fetch(URL, {
@@ -51,10 +63,11 @@ const startWhatsApp = async () => {
         let msgText = msg.message?.conversation || msg.message?.extendedTextMessage?.text
 
         if(msgText){
+            counterIncrement()
             console.log(`New message from ${msgSender}: ${msgText}`)
 
             let telegramMessage = `
-                <b>New WhatsApp Message</b>:\n\n<b>From</b>: ${msgSender}\n<b>Message</b>:\n${msgText}
+                <b>${COUNTER}</b>\n<b>New WhatsApp Message</b>:\n\n<b>From</b>: ${msgSender}\n<b>Message</b>:\n${msgText}
             `
             await sendToTelegram(telegramMessage)
         }
